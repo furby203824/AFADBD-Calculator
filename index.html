@@ -3,13 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AFADBD Calculator</title>
+    <title>AFADBD Calculator — Active Duty Days</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <noscript>
-      You need to enable JavaScript to run this app.
-    </noscript>
-    <div id="root"></div>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="app-wrapper">
+        <!-- Header -->
+        <header class="app-header" role="banner">
+            <div class="header-content">
+                <div class="logo" aria-hidden="true">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <rect width="32" height="32" rx="8" fill="currentColor" class="logo-bg"/>
+                        <path d="M8 22V12L16 8L24 12V22L16 26L8 22Z" stroke="white" stroke-width="1.5" fill="none"/>
+                        <path d="M16 8V26M8 12L24 22M24 12L8 22" stroke="white" stroke-width="1.5" opacity="0.5"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="app-title">AFADBD Calculator</h1>
+                    <p class="app-subtitle">Active Federal Active Duty by Dates</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main id="main-content" class="main-content">
+            <!-- Info Banner -->
+            <div class="info-banner" role="note">
+                <svg class="info-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M10 9V14M10 6.5V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <p>Enter your service date ranges below. The calculator includes both start and end dates in the count.</p>
+            </div>
+
+            <!-- Date Ranges Section -->
+            <section class="ranges-section" aria-label="Service date ranges">
+                <div class="section-header">
+                    <h2 class="section-title">Service Periods</h2>
+                    <button type="button" id="add-range" class="btn btn-secondary btn-sm" aria-label="Add another service period">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        <span>Add Period</span>
+                    </button>
+                </div>
+
+                <div id="date-ranges" class="date-ranges" role="list">
+                    <div class="date-range" role="listitem" data-range="1">
+                        <div class="range-header">
+                            <span class="range-badge">Period 1</span>
+                        </div>
+                        <div class="range-fields">
+                            <div class="field-group">
+                                <label for="start-date-1">Start Date</label>
+                                <div class="input-wrapper">
+                                    <input type="date" id="start-date-1" class="date-input" required aria-required="true">
+                                </div>
+                            </div>
+                            <div class="field-separator" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M4 10H16M16 10L12 6M16 10L12 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="field-group">
+                                <label for="end-date-1">End Date</label>
+                                <div class="input-wrapper">
+                                    <input type="date" id="end-date-1" class="date-input" required aria-required="true">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Calculate Button -->
+            <div class="action-bar">
+                <button type="button" id="calculate" class="btn btn-primary btn-lg">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M7 6H13M7 10H10M7 13H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    <span>Calculate Total Days</span>
+                </button>
+                <button type="button" id="clear-all" class="btn btn-ghost btn-lg">
+                    <span>Clear All</span>
+                </button>
+            </div>
+
+            <!-- Result Section -->
+            <div id="result-section" class="result-section hidden" role="status" aria-live="polite">
+                <div id="result" class="result-card">
+                    <!-- Dynamic content inserted here -->
+                </div>
+            </div>
+
+            <!-- Breakdown Section -->
+            <div id="breakdown-section" class="breakdown-section hidden" aria-label="Period breakdown">
+                <h3 class="breakdown-title">Period Breakdown</h3>
+                <div id="breakdown-list" class="breakdown-list" role="list">
+                    <!-- Dynamic content inserted here -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer" role="contentinfo">
+            <p>&copy; AFADBD Calculator &middot; For informational purposes only</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
