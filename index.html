@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AFADBD Calculator — Active Duty Days</title>
+    <title>AFADBD Calculator — Armed Forces Active Duty Base Date</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,7 +25,7 @@
                 </div>
                 <div>
                     <h1 class="app-title">AFADBD Calculator</h1>
-                    <p class="app-subtitle">Active Federal Active Duty by Dates</p>
+                    <p class="app-subtitle">Armed Forces Active Duty Base Date</p>
                 </div>
             </div>
         </header>
@@ -38,47 +38,70 @@
                     <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
                     <path d="M10 9V14M10 6.5V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
-                <p>Enter your service date ranges below. The calculator includes both start and end dates in the count.</p>
+                <p>Computes your Active Duty Base Date using the day-for-day rule. Enter your current tour date, prior service periods, and any lost time to calculate your AFADBD and retirement eligibility.</p>
             </div>
 
-            <!-- Date Ranges Section -->
-            <section class="ranges-section" aria-label="Service date ranges">
+            <!-- Step 1: Current Tour -->
+            <section class="form-section" aria-labelledby="step1-title">
                 <div class="section-header">
-                    <h2 class="section-title">Service Periods</h2>
-                    <button type="button" id="add-range" class="btn btn-secondary btn-sm" aria-label="Add another service period">
+                    <div class="step-indicator">
+                        <span class="step-number">1</span>
+                        <h2 id="step1-title" class="section-title">Current Tour Begin Date</h2>
+                    </div>
+                </div>
+                <p class="section-desc">The date you entered your current tour of active duty.</p>
+                <div class="field-row">
+                    <div class="field-group">
+                        <label for="current-tour-date">Date of Entry</label>
+                        <div class="input-wrapper">
+                            <input type="date" id="current-tour-date" class="date-input" required aria-required="true">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 2: Prior Active Service -->
+            <section class="form-section" aria-labelledby="step2-title">
+                <div class="section-header">
+                    <div class="step-indicator">
+                        <span class="step-number">2</span>
+                        <h2 id="step2-title" class="section-title">Prior Active Service</h2>
+                    </div>
+                    <button type="button" id="add-service-period" class="btn btn-secondary btn-sm" aria-label="Add another prior service period">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                             <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                         </svg>
                         <span>Add Period</span>
                     </button>
                 </div>
+                <p class="section-desc">Enter each prior period of active military service. You may enter service as date ranges or as a total duration (years, months, days).</p>
 
-                <div id="date-ranges" class="date-ranges" role="list">
-                    <div class="date-range" role="listitem" data-range="1">
-                        <div class="range-header">
-                            <span class="range-badge">Period 1</span>
-                        </div>
-                        <div class="range-fields">
-                            <div class="field-group">
-                                <label for="start-date-1">Start Date</label>
-                                <div class="input-wrapper">
-                                    <input type="date" id="start-date-1" class="date-input" required aria-required="true">
-                                </div>
-                            </div>
-                            <div class="field-separator" aria-hidden="true">
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                    <path d="M4 10H16M16 10L12 6M16 10L12 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div class="field-group">
-                                <label for="end-date-1">End Date</label>
-                                <div class="input-wrapper">
-                                    <input type="date" id="end-date-1" class="date-input" required aria-required="true">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div id="service-periods" class="date-ranges" role="list">
+                    <!-- Service periods inserted dynamically -->
                 </div>
+                <p class="helper-text" id="no-prior-service-hint">No prior service periods added. If you have no prior service, your AFADBD equals your current tour date (adjusted for any lost time).</p>
+            </section>
+
+            <!-- Step 3: Lost Time -->
+            <section class="form-section" aria-labelledby="step3-title">
+                <div class="section-header">
+                    <div class="step-indicator">
+                        <span class="step-number">3</span>
+                        <h2 id="step3-title" class="section-title">Lost Time</h2>
+                    </div>
+                    <button type="button" id="add-lost-time" class="btn btn-secondary btn-sm" aria-label="Add a lost time period">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        <span>Add Period</span>
+                    </button>
+                </div>
+                <p class="section-desc">Unauthorized absence (UA/AWOL), confinement, or other time lost lasting 24+ hours. Counted day-for-day and added forward to the AFADBD.</p>
+
+                <div id="lost-time-periods" class="date-ranges" role="list">
+                    <!-- Lost time periods inserted dynamically -->
+                </div>
+                <p class="helper-text" id="no-lost-time-hint">No lost time periods added.</p>
             </section>
 
             <!-- Calculate Button -->
@@ -88,7 +111,7 @@
                         <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
                         <path d="M7 6H13M7 10H10M7 13H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
-                    <span>Calculate Total Days</span>
+                    <span>Calculate AFADBD</span>
                 </button>
                 <button type="button" id="clear-all" class="btn btn-ghost btn-lg">
                     <span>Clear All</span>
@@ -96,16 +119,24 @@
             </div>
 
             <!-- Result Section -->
-            <div id="result-section" class="result-section hidden" role="status" aria-live="polite">
+            <div id="result-section" class="result-section hidden" role="region" aria-labelledby="result-heading" aria-live="polite">
                 <div id="result" class="result-card">
                     <!-- Dynamic content inserted here -->
                 </div>
             </div>
 
-            <!-- Breakdown Section -->
-            <div id="breakdown-section" class="breakdown-section hidden" aria-label="Period breakdown">
-                <h3 class="breakdown-title">Period Breakdown</h3>
+            <!-- Computation Breakdown -->
+            <div id="breakdown-section" class="breakdown-section hidden" aria-label="Computation breakdown">
+                <h3 class="breakdown-title">Computation Steps</h3>
                 <div id="breakdown-list" class="breakdown-list" role="list">
+                    <!-- Dynamic content inserted here -->
+                </div>
+            </div>
+
+            <!-- Retirement Eligibility -->
+            <div id="retirement-section" class="retirement-section hidden" aria-label="Retirement eligibility">
+                <h3 class="breakdown-title">Retirement Eligibility</h3>
+                <div id="retirement-content" class="retirement-content">
                     <!-- Dynamic content inserted here -->
                 </div>
             </div>
@@ -113,7 +144,7 @@
 
         <!-- Footer -->
         <footer class="app-footer" role="contentinfo">
-            <p>&copy; AFADBD Calculator &middot; For informational purposes only</p>
+            <p>&copy; AFADBD Calculator &middot; Day-for-day computation including 31st days &middot; For informational purposes only</p>
         </footer>
     </div>
 
