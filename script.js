@@ -582,6 +582,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         announceToScreenReader(`Your AFADBD is ${formatDateLong(afabdDate)}`);
+
+        // 9. Show results modal
+        showResultsModal(afabdDate, steps, retire20, retire30, lastDayOfMonth20);
+
+        // 10. Save to history
+        saveToHistory(afabdDate, steps, currentTourDate);
     });
 
     // --- Error Display ---
@@ -657,5 +663,326 @@ document.addEventListener('DOMContentLoaded', () => {
         el.textContent = message;
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 1000);
+    }
+
+    // ========================================
+    // TOAST NOTIFICATIONS
+    // ========================================
+
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `<span class="toast-message">${message}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('toast-exiting');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // ========================================
+    // MODAL HELPERS
+    // ========================================
+
+    function openModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            const firstFocusable = modal.querySelector('button, input, select, [tabindex]');
+            if (firstFocusable) firstFocusable.focus();
+        }
+    }
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Close modals via data-close-modal buttons
+    document.querySelectorAll('[data-close-modal]').forEach(btn => {
+        btn.addEventListener('click', () => closeModal(btn.dataset.closeModal));
+    });
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal(overlay.id);
+        });
+    });
+
+    // Close modals on Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(m => closeModal(m.id));
+        }
+    });
+
+    // ========================================
+    // RESULTS MODAL
+    // ========================================
+
+    const resultsModal = document.getElementById('results-modal');
+    const modalBody = document.getElementById('modal-body');
+    const modalCloseBtn = document.getElementById('modal-close');
+    const modalCloseBottom = document.getElementById('modal-close-bottom');
+    const modalPrintBtn = document.getElementById('modal-print');
+
+    modalCloseBtn.addEventListener('click', () => closeModal('results-modal'));
+    modalCloseBottom.addEventListener('click', () => closeModal('results-modal'));
+
+    function showResultsModal(afabdDate, steps, retire20, retire30, lastDayOfMonth20) {
+        let html = `
+            <div class="modal-result-highlight">
+                <div class="modal-result-date">${formatDateLong(afabdDate)}</div>
+                <div class="modal-result-subtitle">Armed Forces Active Duty Base Date</div>
+            </div>
+            <div class="modal-section">
+                <div class="modal-section-title">Computation Steps</div>
+                ${steps.map(s => `
+                    <div class="modal-item">
+                        <span class="modal-item-label">${s.label}</span>
+                        <span class="modal-item-value">${s.value}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="modal-section">
+                <div class="modal-section-title">Retirement Eligibility</div>
+                <div class="modal-item">
+                    <span class="modal-item-label">20-Year Eligibility</span>
+                    <span class="modal-item-value">${formatDateLong(retire20)}</span>
+                </div>
+                <div class="modal-item">
+                    <span class="modal-item-label">FMCR Transfer</span>
+                    <span class="modal-item-value">${formatDateLong(lastDayOfMonth20)}</span>
+                </div>
+                <div class="modal-item">
+                    <span class="modal-item-label">30-Year Eligibility</span>
+                    <span class="modal-item-value">${formatDateLong(retire30)}</span>
+                </div>
+            </div>
+        `;
+        modalBody.innerHTML = html;
+        openModal('results-modal');
+    }
+
+    // Print report
+    modalPrintBtn.addEventListener('click', () => {
+        window.print();
+    });
+
+    // ========================================
+    // SAVE / LOAD / HISTORY (localStorage)
+    // ========================================
+
+    const STORAGE_KEY_SAVES = 'afadbd_saves';
+    const STORAGE_KEY_HISTORY = 'afadbd_history';
+
+    function getFormState() {
+        const tourDate = document.getElementById('current-tour-date').value;
+        const servicePeriods = [];
+        servicePeriodsDiv.querySelectorAll('.date-range').forEach(card => {
+            const start = card.querySelector('input[id^="svc-start-"]');
+            const end = card.querySelector('input[id^="svc-end-"]');
+            if (start && end) {
+                servicePeriods.push({ start: start.value, end: end.value });
+            }
+        });
+        const lostTimePeriods = [];
+        lostTimePeriodsDiv.querySelectorAll('.date-range').forEach(card => {
+            const reason = card.querySelector('select[id^="lt-reason-"]');
+            const start = card.querySelector('input[id^="lt-start-"]');
+            const end = card.querySelector('input[id^="lt-end-"]');
+            if (reason && start && end) {
+                lostTimePeriods.push({ reason: reason.value, start: start.value, end: end.value });
+            }
+        });
+        return { tourDate, servicePeriods, lostTimePeriods };
+    }
+
+    function restoreFormState(state) {
+        // Clear existing
+        clearAllBtn.click();
+
+        // Set tour date
+        if (state.tourDate) {
+            document.getElementById('current-tour-date').value = state.tourDate;
+        }
+
+        // Add service periods
+        if (state.servicePeriods) {
+            for (const sp of state.servicePeriods) {
+                const card = createServicePeriodCard();
+                const start = card.querySelector('input[id^="svc-start-"]');
+                const end = card.querySelector('input[id^="svc-end-"]');
+                if (start) start.value = sp.start;
+                if (end) end.value = sp.end;
+            }
+        }
+
+        // Add lost time periods
+        if (state.lostTimePeriods) {
+            for (const lt of state.lostTimePeriods) {
+                const card = createLostTimeCard();
+                const reason = card.querySelector('select[id^="lt-reason-"]');
+                const start = card.querySelector('input[id^="lt-start-"]');
+                const end = card.querySelector('input[id^="lt-end-"]');
+                if (reason) {
+                    reason.value = lt.reason;
+                    reason.dispatchEvent(new Event('change'));
+                }
+                if (start) start.value = lt.start;
+                if (end) end.value = lt.end;
+            }
+        }
+    }
+
+    // Save button
+    document.getElementById('save-btn').addEventListener('click', () => {
+        openModal('save-modal');
+        const nameInput = document.getElementById('save-name-input');
+        nameInput.value = '';
+        nameInput.focus();
+    });
+
+    document.getElementById('save-confirm-btn').addEventListener('click', () => {
+        const name = document.getElementById('save-name-input').value.trim();
+        if (!name) {
+            showToast('Please enter a name for this save.', 'error');
+            return;
+        }
+
+        const saves = JSON.parse(localStorage.getItem(STORAGE_KEY_SAVES) || '[]');
+        saves.unshift({
+            id: Date.now(),
+            name,
+            date: new Date().toISOString(),
+            state: getFormState()
+        });
+        // Keep max 20 saves
+        if (saves.length > 20) saves.length = 20;
+        localStorage.setItem(STORAGE_KEY_SAVES, JSON.stringify(saves));
+
+        closeModal('save-modal');
+        showToast('Calculation saved successfully.', 'success');
+    });
+
+    // Allow Enter to confirm save
+    document.getElementById('save-name-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('save-confirm-btn').click();
+        }
+    });
+
+    // Load button
+    document.getElementById('load-btn').addEventListener('click', () => {
+        const saves = JSON.parse(localStorage.getItem(STORAGE_KEY_SAVES) || '[]');
+        const body = document.getElementById('load-modal-body');
+
+        if (saves.length === 0) {
+            body.innerHTML = '<div class="empty-state">No saved calculations found.</div>';
+        } else {
+            body.innerHTML = saves.map(s => `
+                <div class="save-list-item" data-save-id="${s.id}">
+                    <div class="save-list-info">
+                        <div class="save-list-name">${escapeHtml(s.name)}</div>
+                        <div class="save-list-date">${new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</div>
+                    </div>
+                    <div class="save-list-actions">
+                        <button type="button" class="btn btn-primary btn-sm load-save-btn" data-save-id="${s.id}">Load</button>
+                        <button type="button" class="btn btn-danger btn-sm delete-save-btn" data-save-id="${s.id}">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+
+            body.querySelectorAll('.load-save-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const save = saves.find(s => s.id === Number(btn.dataset.saveId));
+                    if (save) {
+                        restoreFormState(save.state);
+                        closeModal('load-modal');
+                        showToast('Calculation loaded.', 'success');
+                    }
+                });
+            });
+
+            body.querySelectorAll('.delete-save-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = Number(btn.dataset.saveId);
+                    const updated = saves.filter(s => s.id !== id);
+                    localStorage.setItem(STORAGE_KEY_SAVES, JSON.stringify(updated));
+                    btn.closest('.save-list-item').remove();
+                    if (updated.length === 0) {
+                        body.innerHTML = '<div class="empty-state">No saved calculations found.</div>';
+                    }
+                    showToast('Save deleted.', 'warning');
+                });
+            });
+        }
+
+        openModal('load-modal');
+    });
+
+    // History
+    function saveToHistory(afabdDate, steps, currentTourDate) {
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY) || '[]');
+        history.unshift({
+            id: Date.now(),
+            date: new Date().toISOString(),
+            afadbd: formatDateLong(afabdDate),
+            tourDate: formatDate(currentTourDate),
+            stepsCount: steps.length,
+            state: getFormState()
+        });
+        // Keep max 50
+        if (history.length > 50) history.length = 50;
+        localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
+    }
+
+    document.getElementById('history-btn').addEventListener('click', () => {
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY) || '[]');
+        const body = document.getElementById('history-modal-body');
+
+        if (history.length === 0) {
+            body.innerHTML = '<div class="empty-state">No calculation history yet.</div>';
+        } else {
+            body.innerHTML = history.map(h => `
+                <div class="save-list-item" data-history-id="${h.id}">
+                    <div class="save-list-info">
+                        <div class="save-list-name">${escapeHtml(h.afadbd)}</div>
+                        <div class="save-list-date">${new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</div>
+                        <div class="save-list-result">Tour: ${escapeHtml(h.tourDate)}</div>
+                    </div>
+                    <div class="save-list-actions">
+                        <button type="button" class="btn btn-primary btn-sm restore-history-btn" data-history-id="${h.id}">Restore</button>
+                    </div>
+                </div>
+            `).join('');
+
+            body.querySelectorAll('.restore-history-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const entry = history.find(h => h.id === Number(btn.dataset.historyId));
+                    if (entry && entry.state) {
+                        restoreFormState(entry.state);
+                        closeModal('history-modal');
+                        showToast('Calculation restored from history.', 'success');
+                    }
+                });
+            });
+        }
+
+        openModal('history-modal');
+    });
+
+    // HTML escape helper
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
 });
