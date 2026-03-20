@@ -29,10 +29,53 @@ document.addEventListener('DOMContentLoaded', () => {
     let serviceCount = 0;
     let lostTimeCount = 0;
 
+    // --- Time Loss Types ---
+    const TIME_LOSS_TYPES = {
+        "AWOL (Absence Without Leave)": { deductible: true, category: "Unauthorized Absence" },
+        "Desertion": { deductible: true, category: "Unauthorized Absence" },
+        "Confinement (Court-Martial)": { deductible: true, category: "Disciplinary" },
+        "Confinement (Civil)": { deductible: true, category: "Disciplinary" },
+        "Suspension from Duty": { deductible: true, category: "Disciplinary" },
+        "Administrative Leave (Pending Investigation)": { deductible: false, category: "Administrative" },
+        "Emergency Leave": { deductible: false, category: "Administrative" },
+        "Ordinary Leave": { deductible: false, category: "Administrative" },
+        "Medical Leave": { deductible: false, category: "Administrative" },
+        "Maternity/Paternity Leave": { deductible: false, category: "Administrative" },
+        "TDY/TAD": { deductible: false, category: "Duty" },
+        "Training": { deductible: false, category: "Duty" },
+        "Hospitalization": { deductible: false, category: "Medical" },
+        "Unauthorized Absence (Other)": { deductible: true, category: "Unauthorized Absence" },
+        "Dropped from Rolls": { deductible: true, category: "Administrative" },
+        "Excess Leave": { deductible: true, category: "Administrative" }
+    };
+
+    /**
+     * Build grouped <optgroup> options HTML from TIME_LOSS_TYPES.
+     */
+    function buildTimeLossOptions() {
+        const groups = {};
+        for (const [name, info] of Object.entries(TIME_LOSS_TYPES)) {
+            if (!groups[info.category]) groups[info.category] = [];
+            groups[info.category].push({ name, deductible: info.deductible });
+        }
+
+        let html = '<option value="" disabled selected>Select reason...</option>';
+        for (const [category, items] of Object.entries(groups)) {
+            html += `<optgroup label="${category}">`;
+            for (const item of items) {
+                const tag = item.deductible ? '' : ' (non-deductible)';
+                html += `<option value="${item.name}">${item.name}${tag}</option>`;
+            }
+            html += '</optgroup>';
+        }
+        return html;
+    }
+
     // --- Create a Service Period Card ---
     function createServicePeriodCard() {
         serviceCount++;
         const id = serviceCount;
+
         const card = document.createElement('div');
         card.classList.add('date-range');
         card.setAttribute('role', 'listitem');
@@ -46,63 +89,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     </svg>
                 </button>
             </div>
-            <div class="input-mode-tabs" role="tablist" aria-label="Input mode for service period ${id}">
-                <button type="button" class="input-mode-tab active" role="tab" aria-selected="true" data-mode="dates">Date Range</button>
-                <button type="button" class="input-mode-tab" role="tab" aria-selected="false" data-mode="duration">Duration (Y/M/D)</button>
-            </div>
-            <div class="input-panel" data-panel="dates">
-                <div class="range-fields">
-                    <div class="field-group">
-                        <label for="svc-start-${id}">Start Date</label>
-                        <div class="input-wrapper">
-                            <input type="date" id="svc-start-${id}" class="date-input">
-                        </div>
-                    </div>
-                    <div class="field-separator" aria-hidden="true">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <path d="M4 10H16M16 10L12 6M16 10L12 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <div class="field-group">
-                        <label for="svc-end-${id}">End Date</label>
-                        <div class="input-wrapper">
-                            <input type="date" id="svc-end-${id}" class="date-input">
-                        </div>
+            <div class="range-fields">
+                <div class="field-group">
+                    <label for="svc-start-${id}">Start Date</label>
+                    <div class="input-wrapper">
+                        <input type="date" id="svc-start-${id}" class="date-input">
                     </div>
                 </div>
-            </div>
-            <div class="input-panel hidden" data-panel="duration">
-                <div class="duration-fields">
-                    <div class="duration-field">
-                        <label for="svc-years-${id}">Years</label>
-                        <input type="number" id="svc-years-${id}" class="number-input" min="0" value="0" inputmode="numeric">
-                    </div>
-                    <div class="duration-field">
-                        <label for="svc-months-${id}">Months</label>
-                        <input type="number" id="svc-months-${id}" class="number-input" min="0" max="11" value="0" inputmode="numeric">
-                    </div>
-                    <div class="duration-field">
-                        <label for="svc-days-${id}">Days</label>
-                        <input type="number" id="svc-days-${id}" class="number-input" min="0" max="30" value="0" inputmode="numeric">
+                <div class="field-separator" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M4 10H16M16 10L12 6M16 10L12 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="field-group">
+                    <label for="svc-end-${id}">End Date</label>
+                    <div class="input-wrapper">
+                        <input type="date" id="svc-end-${id}" class="date-input">
                     </div>
                 </div>
             </div>
         `;
 
-        // Tab switching
-        const tabs = card.querySelectorAll('.input-mode-tab');
-        const panels = card.querySelectorAll('.input-panel');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
-                tab.classList.add('active');
-                tab.setAttribute('aria-selected', 'true');
-                panels.forEach(p => p.classList.add('hidden'));
-                card.querySelector(`[data-panel="${tab.dataset.mode}"]`).classList.remove('hidden');
-            });
-        });
-
-        // Remove button
         card.querySelector('.btn-remove').addEventListener('click', () => {
             card.style.opacity = '0';
             card.style.transform = 'translateY(-8px)';
@@ -116,13 +123,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         servicePeriodsDiv.appendChild(card);
         toggleHint(servicePeriodsDiv, noServiceHint);
+
+        const startInput = card.querySelector(`#svc-start-${id}`);
+        if (startInput) startInput.focus();
+
         return card;
     }
 
-    // --- Create a Lost Time Card ---
+    // --- Create a Lost Time Card (with reason select) ---
     function createLostTimeCard() {
         lostTimeCount++;
         const id = lostTimeCount;
+
         const card = document.createElement('div');
         card.classList.add('date-range');
         card.setAttribute('role', 'listitem');
@@ -136,51 +148,49 @@ document.addEventListener('DOMContentLoaded', () => {
                     </svg>
                 </button>
             </div>
-            <div class="input-mode-tabs" role="tablist" aria-label="Input mode for lost time ${id}">
-                <button type="button" class="input-mode-tab active" role="tab" aria-selected="true" data-mode="dates">Date Range</button>
-                <button type="button" class="input-mode-tab" role="tab" aria-selected="false" data-mode="days">Total Days</button>
+            <div class="field-group lt-reason-group">
+                <label for="lt-reason-${id}">Reason for Time Loss</label>
+                <select id="lt-reason-${id}" class="select-input" aria-required="true">
+                    ${buildTimeLossOptions()}
+                </select>
+                <span class="lt-deductible-tag hidden" id="lt-tag-${id}"></span>
             </div>
-            <div class="input-panel" data-panel="dates">
-                <div class="range-fields">
-                    <div class="field-group">
-                        <label for="lt-start-${id}">Start Date</label>
-                        <div class="input-wrapper">
-                            <input type="date" id="lt-start-${id}" class="date-input">
-                        </div>
-                    </div>
-                    <div class="field-separator" aria-hidden="true">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <path d="M4 10H16M16 10L12 6M16 10L12 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <div class="field-group">
-                        <label for="lt-end-${id}">End Date</label>
-                        <div class="input-wrapper">
-                            <input type="date" id="lt-end-${id}" class="date-input">
-                        </div>
+            <div class="range-fields">
+                <div class="field-group">
+                    <label for="lt-start-${id}">Start Date</label>
+                    <div class="input-wrapper">
+                        <input type="date" id="lt-start-${id}" class="date-input">
                     </div>
                 </div>
-            </div>
-            <div class="input-panel hidden" data-panel="days">
-                <div class="field-row">
-                    <div class="field-group">
-                        <label for="lt-days-${id}">Number of Days</label>
-                        <input type="number" id="lt-days-${id}" class="number-input" min="1" value="" placeholder="e.g. 15" inputmode="numeric">
+                <div class="field-separator" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M4 10H16M16 10L12 6M16 10L12 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="field-group">
+                    <label for="lt-end-${id}">End Date</label>
+                    <div class="input-wrapper">
+                        <input type="date" id="lt-end-${id}" class="date-input">
                     </div>
                 </div>
             </div>
         `;
 
-        const tabs = card.querySelectorAll('.input-mode-tab');
-        const panels = card.querySelectorAll('.input-panel');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
-                tab.classList.add('active');
-                tab.setAttribute('aria-selected', 'true');
-                panels.forEach(p => p.classList.add('hidden'));
-                card.querySelector(`[data-panel="${tab.dataset.mode}"]`).classList.remove('hidden');
-            });
+        // Show deductible/non-deductible tag when reason changes
+        const reasonSelect = card.querySelector(`#lt-reason-${id}`);
+        const tag = card.querySelector(`#lt-tag-${id}`);
+        reasonSelect.addEventListener('change', () => {
+            const typeInfo = TIME_LOSS_TYPES[reasonSelect.value];
+            if (typeInfo) {
+                tag.classList.remove('hidden');
+                if (typeInfo.deductible) {
+                    tag.textContent = 'Deductible — will adjust AFADBD';
+                    tag.className = 'lt-deductible-tag tag-deductible';
+                } else {
+                    tag.textContent = 'Non-deductible — will not adjust AFADBD';
+                    tag.className = 'lt-deductible-tag tag-non-deductible';
+                }
+            }
         });
 
         card.querySelector('.btn-remove').addEventListener('click', () => {
@@ -196,6 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         lostTimePeriodsDiv.appendChild(card);
         toggleHint(lostTimePeriodsDiv, noLostTimeHint);
+
+        reasonSelect.focus();
+
         return card;
     }
 
@@ -216,116 +229,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function toggleHint(container, hint) {
         const hasCards = container.querySelectorAll('.date-range').length > 0;
-        if (hasCards) {
-            hint.classList.add('hidden');
-        } else {
-            hint.classList.remove('hidden');
-        }
+        hint.classList.toggle('hidden', hasCards);
     }
 
     // --- Add Period Buttons ---
     addServiceBtn.addEventListener('click', () => {
-        const card = createServicePeriodCard();
-        const firstInput = card.querySelector('.date-input');
-        if (firstInput) firstInput.focus();
+        createServicePeriodCard();
         announceToScreenReader('Service period added');
     });
 
     addLostTimeBtn.addEventListener('click', () => {
-        const card = createLostTimeCard();
-        const firstInput = card.querySelector('.date-input');
-        if (firstInput) firstInput.focus();
+        createLostTimeCard();
         announceToScreenReader('Lost time period added');
     });
 
     // ========================================
     // AFADBD COMPUTATION LOGIC
     // ========================================
-
-    /**
-     * Calculate the duration of a service period.
-     * - For periods <= 30 days: count day-for-day
-     * - For periods > 30 days: (end - start) + 1 day
-     * Both use actual calendar days (day-for-day, including 31st).
-     *
-     * Returns { years, months, days } for date-range mode,
-     * or the direct Y/M/D input for duration mode.
-     */
-    function getServiceDuration(card) {
-        const activeTab = card.querySelector('.input-mode-tab.active');
-        const mode = activeTab.dataset.mode;
-
-        if (mode === 'duration') {
-            const years = parseInt(card.querySelector('input[id^="svc-years-"]').value) || 0;
-            const months = parseInt(card.querySelector('input[id^="svc-months-"]').value) || 0;
-            const days = parseInt(card.querySelector('input[id^="svc-days-"]').value) || 0;
-            if (years === 0 && months === 0 && days === 0) return null;
-            return { years, months, days, description: `${years}y ${months}m ${days}d (manual entry)` };
-        }
-
-        // Date range mode
-        const startInput = card.querySelector('input[id^="svc-start-"]');
-        const endInput = card.querySelector('input[id^="svc-end-"]');
-
-        if (!startInput.value || !endInput.value) return null;
-
-        const start = parseLocalDate(startInput.value);
-        const end = parseLocalDate(endInput.value);
-
-        if (end < start) {
-            startInput.classList.add('input-error');
-            endInput.classList.add('input-error');
-            return { error: 'End date cannot be before start date.' };
-        }
-
-        // Calculate day-for-day difference including both endpoints
-        const totalDays = daysBetweenInclusive(start, end);
-
-        // Convert to Y/M/D using calendar arithmetic
-        const duration = calendarDifference(start, end);
-
-        const startStr = formatDate(start);
-        const endStr = formatDate(end);
-        return {
-            ...duration,
-            totalDays,
-            description: `${startStr} to ${endStr} (${totalDays} days)`
-        };
-    }
-
-    /**
-     * Get lost time days from a card.
-     * Returns number of days (day-for-day count).
-     */
-    function getLostTimeDays(card) {
-        const activeTab = card.querySelector('.input-mode-tab.active');
-        const mode = activeTab.dataset.mode;
-
-        if (mode === 'days') {
-            const daysInput = card.querySelector('input[id^="lt-days-"]');
-            const days = parseInt(daysInput.value) || 0;
-            if (days <= 0) return null;
-            return { days, description: `${days} days (manual entry)` };
-        }
-
-        // Date range mode
-        const startInput = card.querySelector('input[id^="lt-start-"]');
-        const endInput = card.querySelector('input[id^="lt-end-"]');
-
-        if (!startInput.value || !endInput.value) return null;
-
-        const start = parseLocalDate(startInput.value);
-        const end = parseLocalDate(endInput.value);
-
-        if (end < start) {
-            startInput.classList.add('input-error');
-            endInput.classList.add('input-error');
-            return { error: 'End date cannot be before start date.' };
-        }
-
-        const days = daysBetweenInclusive(start, end);
-        return { days, description: `${formatDate(start)} to ${formatDate(end)} (${days} days)` };
-    }
 
     /**
      * Parse a date string (YYYY-MM-DD) as a local date (no timezone shift).
@@ -367,7 +287,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Normalize: if days >= days-in-month, carry to months
         if (days >= 30) {
-            // Only carry if it makes a full month
             const daysInMonth = new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate();
             if (days >= daysInMonth) {
                 months++;
@@ -383,12 +302,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
+     * Read start/end dates from a card and return duration info.
+     * Returns null if empty, { error } if invalid, or { years, months, days, totalDays, description }.
+     */
+    function getDateRangeFromCard(card, prefix) {
+        const startInput = card.querySelector(`input[id^="${prefix}-start-"]`);
+        const endInput = card.querySelector(`input[id^="${prefix}-end-"]`);
+
+        if (!startInput.value || !endInput.value) {
+            if (!startInput.value) startInput.classList.add('input-error');
+            if (!endInput.value) endInput.classList.add('input-error');
+            return { error: 'Please fill in both start and end dates for all periods.' };
+        }
+
+        const start = parseLocalDate(startInput.value);
+        const end = parseLocalDate(endInput.value);
+
+        if (end < start) {
+            startInput.classList.add('input-error');
+            endInput.classList.add('input-error');
+            return { error: 'End date cannot be before start date.' };
+        }
+
+        const totalDays = daysBetweenInclusive(start, end);
+        const duration = calendarDifference(start, end);
+        const startStr = formatDate(start);
+        const endStr = formatDate(end);
+
+        return {
+            ...duration,
+            totalDays,
+            description: `${startStr} — ${endStr} = ${duration.years}y ${duration.months}m ${duration.days}d (${totalDays} days)`
+        };
+    }
+
+    /**
      * Subtract a duration { years, months, days } from a date.
      * Uses calendar arithmetic with borrowing (as specified in policy).
      *
      * Example from policy:
      *   2015/01/03 - 3y 6m 2d:
-     *   Borrow 12 months → 2014/13/03 - 03/06/02 = 2011/07/01
+     *   Borrow 12 months -> 2014/13/03 - 03/06/02 = 2011/07/01
      */
     function subtractDuration(date, duration) {
         let year = date.getFullYear();
@@ -403,7 +357,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 year--;
                 month += 12;
             }
-            // Days in the new month
             const daysInPrevMonth = new Date(year, month, 0).getDate();
             day += daysInPrevMonth;
         }
@@ -483,45 +436,37 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Gather prior service periods
         const serviceCards = servicePeriodsDiv.querySelectorAll('.date-range');
         const serviceDurations = [];
-        let hasServiceError = false;
 
-        serviceCards.forEach((card, i) => {
-            const duration = getServiceDuration(card);
-            if (!duration) return;
-            if (duration.error) {
-                hasServiceError = true;
-                showError(duration.error);
+        for (let i = 0; i < serviceCards.length; i++) {
+            const result = getDateRangeFromCard(serviceCards[i], 'svc');
+            if (result.error) {
+                showError(result.error);
                 return;
             }
-            serviceDurations.push(duration);
+            serviceDurations.push(result);
             steps.push({
                 label: `Service Period ${i + 1}`,
-                value: duration.description
+                value: result.description
             });
-        });
+        }
 
-        if (hasServiceError) return;
-
-        // 3. Compute total prior service
+        // 3. Compute AFADBD
         let afabdDate;
         const numPeriods = serviceDurations.length;
 
         if (numPeriods === 0) {
-            // No prior service: AFADBD = current tour date
             afabdDate = new Date(currentTourDate);
             steps.push({
                 label: 'No prior service',
                 value: 'AFADBD starts at current tour date'
             });
         } else {
-            // Sum all durations
             const totalService = sumDurations(serviceDurations);
             steps.push({
                 label: 'Total Prior Service',
                 value: `${totalService.years}y ${totalService.months}m ${totalService.days}d`
             });
 
-            // Subtract from current tour date
             afabdDate = subtractDuration(currentTourDate, totalService);
             steps.push({
                 label: 'After subtracting prior service',
@@ -529,44 +474,65 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Add 1 inclusive day per non-continuous period
-            // Each separate service period gets +1 inclusive day
-            // (This advances the date forward by numPeriods days total,
-            //  since each period's subtraction requires an inclusive day adjustment)
             afabdDate = addDays(afabdDate, numPeriods);
             steps.push({
-                label: `Inclusive days (+${numPeriods} day${numPeriods > 1 ? 's' : ''} for ${numPeriods} period${numPeriods > 1 ? 's' : ''})`,
+                label: `Inclusive days (+${numPeriods} for ${numPeriods} period${numPeriods > 1 ? 's' : ''})`,
                 value: formatDateLong(afabdDate)
             });
         }
 
-        // 4. Gather lost time
+        // 4. Gather lost time periods
         const lostTimeCards = lostTimePeriodsDiv.querySelectorAll('.date-range');
-        let totalLostDays = 0;
-        let hasLostTimeError = false;
+        let totalDeductibleDays = 0;
+        let totalNonDeductibleDays = 0;
 
-        lostTimeCards.forEach((card, i) => {
-            const lt = getLostTimeDays(card);
-            if (!lt) return;
-            if (lt.error) {
-                hasLostTimeError = true;
-                showError(lt.error);
+        for (let i = 0; i < lostTimeCards.length; i++) {
+            const card = lostTimeCards[i];
+            const reasonSelect = card.querySelector('select[id^="lt-reason-"]');
+
+            if (!reasonSelect.value) {
+                reasonSelect.classList.add('input-error');
+                showError('Please select a reason for each lost time period.');
                 return;
             }
-            totalLostDays += lt.days;
+
+            const result = getDateRangeFromCard(card, 'lt');
+            if (result.error) {
+                showError(result.error);
+                return;
+            }
+
+            const typeInfo = TIME_LOSS_TYPES[reasonSelect.value];
+            const isDeductible = typeInfo && typeInfo.deductible;
+            const startDate = parseLocalDate(card.querySelector('input[id^="lt-start-"]').value);
+            const endDate = parseLocalDate(card.querySelector('input[id^="lt-end-"]').value);
+            const deductLabel = isDeductible ? 'deductible' : 'non-deductible';
+
+            if (isDeductible) {
+                totalDeductibleDays += result.totalDays;
+            } else {
+                totalNonDeductibleDays += result.totalDays;
+            }
+
             steps.push({
-                label: `Lost Time ${i + 1}`,
-                value: lt.description
+                label: `Lost Time ${i + 1}: ${reasonSelect.value}`,
+                value: `${formatDate(startDate)} — ${formatDate(endDate)} (${result.totalDays} days, ${deductLabel})`
             });
-        });
+        }
 
-        if (hasLostTimeError) return;
-
-        // 5. Add lost time (advances date forward)
-        if (totalLostDays > 0) {
-            afabdDate = addDays(afabdDate, totalLostDays);
+        // 5. Add deductible lost time (advances date forward)
+        if (totalDeductibleDays > 0) {
+            afabdDate = addDays(afabdDate, totalDeductibleDays);
             steps.push({
-                label: `Lost time adjustment (+${totalLostDays} day${totalLostDays > 1 ? 's' : ''})`,
+                label: `Deductible lost time (+${totalDeductibleDays} day${totalDeductibleDays > 1 ? 's' : ''})`,
                 value: formatDateLong(afabdDate)
+            });
+        }
+
+        if (totalNonDeductibleDays > 0) {
+            steps.push({
+                label: `Non-deductible time (${totalNonDeductibleDays} day${totalNonDeductibleDays > 1 ? 's' : ''})`,
+                value: 'No AFADBD adjustment'
             });
         }
 
@@ -579,7 +545,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="result-unit">Armed Forces Active Duty Base Date</div>
         `;
 
-        // Re-trigger animation
         resultDiv.style.animation = 'none';
         resultDiv.offsetHeight;
         resultDiv.style.animation = '';
@@ -615,7 +580,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="retirement-note">Enlisted Marines may only transfer to the FMCR on the last day of the month in which they become eligible.</p>
         `;
 
-        // Scroll to result
         resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         announceToScreenReader(`Your AFADBD is ${formatDateLong(afabdDate)}`);
     });
@@ -677,7 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Keyboard: Enter to calculate ---
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && (e.target.classList.contains('date-input') || e.target.classList.contains('number-input'))) {
+        if (e.key === 'Enter' && (e.target.classList.contains('date-input') || e.target.classList.contains('select-input'))) {
             e.preventDefault();
             calculateBtn.click();
         }
