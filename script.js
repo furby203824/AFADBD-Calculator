@@ -49,6 +49,108 @@ document.addEventListener('DOMContentLoaded', () => {
         "Excess Leave": { deductible: true, category: "Administrative" }
     };
 
+    // --- Prior Active Service Codes ---
+    const SERVICE_CODES = [
+        { code: "11", desc: "USMC (OFF/ENL)", service: "USMC" },
+        { code: "12", desc: "REGULAR OFF/ENL WHOSE PAY AND ALLOWANCES ARE REIMBURSED BY OTHER AGENCIES OF THE GOVMNT", service: "USMC" },
+        { code: "13", desc: "USMC DRAFTEE", service: "USMC" },
+        { code: "2C", desc: "CIVIL SERVICE EMPLOYEE", service: "CIV" },
+        { code: "2D", desc: "CONTRACTOR", service: "CIV" },
+        { code: "2E", desc: "OTHER CIVILIAN", service: "CIV" },
+        { code: "2N", desc: "NAVY", service: "USN" },
+        { code: "2O", desc: "PLC, NROTC OR RESERVE OFFICER CANDIDATE", service: "USMCR" },
+        { code: "2R", desc: "MILITARY PERSONNEL OF OTHER COUNTRIES", service: "OTHER" },
+        { code: "2T", desc: "ARMY", service: "USA" },
+        { code: "2U", desc: "AIR FORCE", service: "USAF" },
+        { code: "2V", desc: "COAST GUARD", service: "USCG" },
+        { code: "3A", desc: "CLEMENCY, NO PAY STAT, NOT CHARGEABLE MC", service: "OTHER" },
+        { code: "3B", desc: "CLEMENCY, PAY STAT", service: "OTHER" },
+        { code: "4A", desc: "ARMY NATIONAL GUARD", service: "USANG" },
+        { code: "4C", desc: "CIVILIAN", service: "CIV" },
+        { code: "4G", desc: "AIR NATIONAL GUARD", service: "ARNG" },
+        { code: "4N", desc: "NAVY RESERVIST", service: "USNR" },
+        { code: "4R", desc: "FOREIGN COUNTRY RESERVIST", service: "OTHER" },
+        { code: "4T", desc: "ARMY RESERVIST", service: "USAR" },
+        { code: "4U", desc: "AIR FORCE RESERVIST", service: "USAFR" },
+        { code: "4V", desc: "COAST GUARD RESERVIST", service: "USCGR" },
+        { code: "A1", desc: "FMCR", service: "USMC-RET" },
+        { code: "A2", desc: "USMC RET ON EXTENDED ACTIVE DUTY", service: "USMC-RET" },
+        { code: "A3", desc: "USMC RET ON TEM ACTIVE DUTY", service: "USMC-RET" },
+        { code: "A4", desc: "USMCR RET ON TEM ACTIVE DUTY LT 180 DAYS", service: "USMCR-RET" },
+        { code: "A5", desc: "USMC RET, ON TEM ACDU FOR SELECTED SERVICE", service: "USMC-RET" },
+        { code: "A6", desc: "FMCR RECALLED TEM ACTIVE DUTY LT 180 (OFF/ENL)", service: "USMCR" },
+        { code: "A7", desc: "USMC RETIRED ON ACTIVE DUTY (OFF/ENL)", service: "USMC-RET" },
+        { code: "A8", desc: "USMCR RETIRED, (NON PAY)", service: "USMC-RET" },
+        { code: "A9", desc: "USMCR RETIRED, (PAY) ENLISTED", service: "USMC-RET" },
+        { code: "AA", desc: "FMCR, RECALLED ACDU 180 DAYS OR MORE (OFF/ENL)", service: "USMCR" },
+        { code: "AB", desc: "RES RETIRED, RECALLED ACDU FOR REG, 180 DAYS OR MORE (OFF/ENL)", service: "USMCR" },
+        { code: "AC", desc: "RES RETIRED, RECALLED ACDU FOR RES, 180 DAYS OR MORE (OFF/ENL)", service: "USMCR" },
+        { code: "AH", desc: "USMCR, RETIRED HONORARY", service: "USMCR-RET" },
+        { code: "AR", desc: "USMC RET", service: "USMC-RET" },
+        { code: "B1", desc: "RES OFF/ENL ORDERED TO ACTIVE DUTY TO PROVIDE FTS", service: "USMCR" },
+        { code: "B2", desc: "FTS RES RECRUITING", service: "USMCR" },
+        { code: "B3", desc: "FTS RES INSTR/TRNG", service: "USMCR" },
+        { code: "B4", desc: "FTS RES ORGANIZATION", service: "USMCR" },
+        { code: "B5", desc: "SMCR ENLISTED IDT,NONPRIOR ON IADT/AWAIT IADT (WITH PAY)", service: "USMCR" },
+        { code: "C3", desc: "ACT OFFICER, SWAG", service: "USMCR" },
+        { code: "C4", desc: "ACT RES ON TEM ACDU FOR REG MORE THAN 180 DAYS", service: "USMCR" },
+        { code: "C5", desc: "ACTIVE DUTY OFFICER ON UAD BEYOND INIT ACDU OBLIGATION", service: "USMCR" },
+        { code: "C6", desc: "ACTIVE DUTY OFFICER ON EDR BEYOND INIT ACDU OBLIGATION", service: "USMCR" },
+        { code: "C7", desc: "ACTIVE RES ON TEM ACDU SPEC WORK", service: "USMCR" },
+        { code: "C8", desc: "RES OFFICER AWTG ASSIGN AFTER OCS", service: "USMCR" },
+        { code: "C9", desc: "ENLISTED PARTICIPANT IN OFFICER CANDIDATE COURSE", service: "USMCR" },
+        { code: "CA", desc: "FORMER USMCR(J) ON EAD IN LIEU OF REENL USMC", service: "USMCR" },
+        { code: "CB", desc: "RES MANDATORY PARTICIPANT FOR MORE THAN 45 DAYS", service: "USMCR" },
+        { code: "CC", desc: "RES ON TEM ACDU LESS THAN 180 DAYS", service: "USMCR" },
+        { code: "CD", desc: "RES ENLISTED EAD AS RECRUITER", service: "USMCR" },
+        { code: "CE", desc: "RES ENLISTED RECRUITER AIDE ON TEM ACTIVE DUTY", service: "USMCR" },
+        { code: "CF", desc: "RES, SHORT TOURS/TRAINING ASSISTANT", service: "USMCR" },
+        { code: "CG", desc: "(RESERVED FOR FUTURE USE)", service: "USMCR" },
+        { code: "CH", desc: "RES, PAY & ALLW REIMBURSED BY OTHER AGENCY", service: "USMCR" },
+        { code: "CJ", desc: "PLC LAWYER", service: "USMCR" },
+        { code: "D1", desc: "RESERVISTS 20 YRS SAT SERV MET BUT ELECTS DISCHARGE", service: "USMCR-RET" },
+        { code: "K1", desc: "ENLISTED RES ON IADT AND/OR ELST", service: "USMCR" },
+        { code: "K2", desc: "ENLISTED RES 2ND INCREMENT IADT", service: "USMCR" },
+        { code: "K3", desc: "RES ON TEM ACDU FOR ETT OR RCT", service: "USMCR" },
+        { code: "K4", desc: "ENLISTED RES NPS OBLIGOR 6 YR ACDU & IDT", service: "USMCR" },
+        { code: "K5", desc: "ENL REGULAR USMC CONTRACTED AND AWAITING SHIPMENT IN THE DEP", service: "USMC" },
+        { code: "K6", desc: "FTS, POLICY & REGULATIONS", service: "USMCR" },
+        { code: "K7", desc: "IRR, MTU RU 88900-88906, IRR MBR IN OFFICER TRNG PGM", service: "USMCR" },
+        { code: "K8", desc: "ENL RESERVE, NPS, OBLIGOR, 3YR ACDU & IDT", service: "USMCR" },
+        { code: "K9", desc: "SMCR ENLISTED IDT,NONPRIOR ON IADT/AWAIT IADT (WITH PAY)", service: "USMCR" },
+        { code: "KA", desc: "SMCR IDT", service: "USMCR" },
+        { code: "KB", desc: "RESERVE ON ACDU IN EXCESS OF 30 DAYS & ON MEDICAL HOLD", service: "USMCR" },
+        { code: "KC", desc: "ENLISTED NON-PRIOR SERVICE OBLIGOR (7 YRS ACDU & IDT)", service: "USMCR" },
+        { code: "KD", desc: "STANDBY RESERVE AND KEY FEDERAL OFF, INACT LIST, ACT STAT", service: "USMCR" },
+        { code: "KE", desc: "STANDBY RESERVE INACTIVE LIST", service: "USMCR" },
+        { code: "KF", desc: "IMA IDT", service: "USMCR" },
+        { code: "KG", desc: "IRR ASSIGNED AS A MOBILIZATION DESIGNEE", service: "USMCR" },
+        { code: "KJ", desc: "RESERVE OFFICER PARTICIPATING IN OCC-R/TBS/MOS TRAINING", service: "USMCR" },
+        { code: "KM", desc: "MOBILIZED READY RESERVE/STANDBY RESERVE", service: "USMCR" },
+        { code: "KP", desc: "PLC;ENLISTED PARTICIPANT IN OFFICER COMMISSIONING PROGRAM", service: "USMCR" }
+    ];
+
+    /**
+     * Build grouped <optgroup> options for service codes, grouped by service branch.
+     */
+    function buildServiceCodeOptions() {
+        const groups = {};
+        for (const entry of SERVICE_CODES) {
+            if (!groups[entry.service]) groups[entry.service] = [];
+            groups[entry.service].push(entry);
+        }
+
+        let html = '<option value="" disabled selected>Select service code...</option>';
+        for (const [service, items] of Object.entries(groups)) {
+            html += `<optgroup label="${service}">`;
+            for (const item of items) {
+                html += `<option value="${item.code}">${item.code} — ${item.desc}</option>`;
+            }
+            html += '</optgroup>';
+        }
+        return html;
+    }
+
     /**
      * Build grouped <optgroup> options HTML from TIME_LOSS_TYPES.
      */
@@ -89,6 +191,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     </svg>
                 </button>
             </div>
+            <div class="field-group svc-code-group">
+                <label for="svc-code-${id}">Service Code</label>
+                <select id="svc-code-${id}" class="select-input">
+                    ${buildServiceCodeOptions()}
+                </select>
+                <span class="svc-branch-tag hidden" id="svc-tag-${id}"></span>
+            </div>
             <div class="range-fields">
                 <div class="field-group">
                     <label for="svc-start-${id}">Start Date</label>
@@ -110,6 +219,18 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
+        // Show service branch tag when code changes
+        const codeSelect = card.querySelector(`#svc-code-${id}`);
+        const branchTag = card.querySelector(`#svc-tag-${id}`);
+        codeSelect.addEventListener('change', () => {
+            const entry = SERVICE_CODES.find(s => s.code === codeSelect.value);
+            if (entry) {
+                branchTag.classList.remove('hidden');
+                branchTag.textContent = entry.service;
+                branchTag.className = 'svc-branch-tag tag-service';
+            }
+        });
+
         card.querySelector('.btn-remove').addEventListener('click', () => {
             card.style.opacity = '0';
             card.style.transform = 'translateY(-8px)';
@@ -124,8 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
         servicePeriodsDiv.appendChild(card);
         toggleHint(servicePeriodsDiv, noServiceHint);
 
-        const startInput = card.querySelector(`#svc-start-${id}`);
-        if (startInput) startInput.focus();
+        codeSelect.focus();
 
         return card;
     }
@@ -444,8 +564,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             serviceDurations.push(result);
+
+            // Get selected service code info
+            const codeSelect = serviceCards[i].querySelector('select[id^="svc-code-"]');
+            const codeEntry = codeSelect ? SERVICE_CODES.find(s => s.code === codeSelect.value) : null;
+            const codeLabel = codeEntry ? ` [${codeEntry.code} — ${codeEntry.service}]` : '';
+
             steps.push({
-                label: `Service Period ${i + 1}`,
+                label: `Service Period ${i + 1}${codeLabel}`,
                 value: result.description
             });
         }
@@ -786,10 +912,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const tourDate = document.getElementById('current-tour-date').value;
         const servicePeriods = [];
         servicePeriodsDiv.querySelectorAll('.date-range').forEach(card => {
+            const code = card.querySelector('select[id^="svc-code-"]');
             const start = card.querySelector('input[id^="svc-start-"]');
             const end = card.querySelector('input[id^="svc-end-"]');
             if (start && end) {
-                servicePeriods.push({ start: start.value, end: end.value });
+                servicePeriods.push({ code: code ? code.value : '', start: start.value, end: end.value });
             }
         });
         const lostTimePeriods = [];
@@ -817,8 +944,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.servicePeriods) {
             for (const sp of state.servicePeriods) {
                 const card = createServicePeriodCard();
+                const code = card.querySelector('select[id^="svc-code-"]');
                 const start = card.querySelector('input[id^="svc-start-"]');
                 const end = card.querySelector('input[id^="svc-end-"]');
+                if (code && sp.code) {
+                    code.value = sp.code;
+                    code.dispatchEvent(new Event('change'));
+                }
                 if (start) start.value = sp.start;
                 if (end) end.value = sp.end;
             }
